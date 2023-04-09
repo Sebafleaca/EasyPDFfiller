@@ -10,6 +10,9 @@ num_pages = read_PDF._get_num_pages()
 text = []
 index=0
 for page in pages:
+    for x in page.get_contents():
+        print(x)
+    print(page.extract_xform_text)
     text.insert(index, page.extract_text())
     index=index+1
 
