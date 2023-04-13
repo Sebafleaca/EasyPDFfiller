@@ -1,5 +1,10 @@
 import sys
 from pdfrw import PdfReader, PdfWriter, PdfDict
+import json
+
+# Load data from json to dict
+with open('sample-data.json', 'r') as data_file:
+    data = json.load(data_file)
 
 # In/Out paths
 input_pdf = PdfReader(sys.argv[1])
@@ -7,13 +12,6 @@ output_pdf = "filled-sample.pdf"
 
 # Input file's pages
 pages = input_pdf.pages
-
-# Dict with sample values to fill in forms
-data = {
-    'NameKey': 'Bugs',
-    'SurnameKey': 'Bunny',
-    'AgeKey': 84
-}
 
 # Forms filler procedure
 for annot in pages[0]['/Annots']:
