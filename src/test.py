@@ -12,7 +12,7 @@ class TestEasyPDFfiller(unittest.TestCase):
         self.assertIsNotNone(pages)
 
     def test_filled_forms(self):
-        filled_file = pdfrw.PdfReader("filled-sample.pdf")
+        filled_file = pdfrw.PdfReader("resources/filled-sample.pdf")
         page_1 = filled_file.pages[0]
         for annot in page_1['/Annots']:
             filled_form_value = annot['/V'][1:-1]
@@ -21,5 +21,5 @@ class TestEasyPDFfiller(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    input_file = "fillable-sample.pdf"
+    input_file = "resources/fillable-sample.pdf"
     unittest.main(argv=[input_file])

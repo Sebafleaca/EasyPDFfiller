@@ -3,12 +3,12 @@ from pdfrw import PdfReader, PdfWriter, PdfDict
 import json
 
 # Load data from json to dict
-with open('sample-data.json', 'r') as data_file:
+with open('resources/sample-data.json', 'r') as data_file:
     data = json.load(data_file)
 
 # In/Out paths
 input_pdf = PdfReader(sys.argv[1])
-output_pdf = "filled-sample.pdf"
+output_pdf = "resources/filled-sample.pdf"
 
 # Input file's pages
 pages = input_pdf.pages
