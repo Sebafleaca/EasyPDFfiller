@@ -2,24 +2,47 @@ import sys
 from pdfrw import PdfReader, PdfWriter, PdfDict
 import json
 
-# Load data from json to dict
-with open('resources/sample-data.json', 'r') as data_file:
-    data = json.load(data_file)
 
-# In/Out paths
-input_pdf = PdfReader(sys.argv[1])
-output_pdf = "resources/filled-sample.pdf"
+class PdfFiller:
 
-# Input file's pages
-pages = input_pdf.pages
+    output_pdf = ""
+    pages = []
+    data = {}
 
-# Forms filler procedure
-for annot in pages[0]['/Annots']:
-    if annot['/T']:
-        annot.update(
-            PdfDict(
-            V='{}'.format(data[annot['/T'][1:-1]]))
-        )
+    # Initialize a PdfFiller object.
+    def __init__(self, input_pdf, data_file):
+        self.input_pdf = input_pdf
+        self.pages = input_pdf.pages
+        self.load_data(data_file)
+        self.set_output(path = "resources/filled-sample.pdf")
+        
+    # Load data from json to dict.
+    def load_data(self, data_in) -> None:
+        with open(data_in, 'r') as json_file:
+            self.data = json.load(json_file)
 
-# Output filled file
-PdfWriter().write(output_pdf, input_pdf)
+    # Set output path.
+    def set_output(self, path) -> None:
+        self.output_pdf = path
+
+    # Get output path.
+    def get_output(self) -> str:
+        return str(self.output_pdf)
+    
+    # Form-filler procedure.
+    def fill_forms(self) -> None:
+        for annotation in self.pages[0]['/Annots']:
+            if annotation['/T']:
+                annotation.update(
+                    PdfDict(
+                    V='{}'.format(self.data[annotation['/T'][1:-1]]))
+                )
+        PdfWriter().write(self.output_pdf, self.input_pdf)
+
+
+pdf_reader = PdfReader(sys.argv[1])
+data_file = sys.argv[2]
+
+fillerObject = PdfFiller(pdf_reader, data_file)
+fillerObject.fill_forms()
+print(fillerObject.get_output())
