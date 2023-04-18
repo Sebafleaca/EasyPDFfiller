@@ -33,7 +33,8 @@ class PdfFiller:
                 for annot in page['/Annots']:
                     if annot['/T']:
                         data_to_fill = self.data[annot['/T'][1:-1]]
-                        annot.update(PdfDict(V='{}'.format(data_to_fill)))                        
+                        annot.update(PdfDict(V='{}'.format(data_to_fill)))
+                        annot.update(PdfDict(Ff=1))
                     else:
                         self.errors.insert("Form's name is empty")
             else:
