@@ -25,12 +25,7 @@ The constructor for 'PdfFiller' gets two params as command line arguments:
 
 `$ python src/EasyPDFfiller.py fillable-pdf.pdf fill-in-data.json`
 
-Then call the method 'fill_forms()' to fill the data in the pdf.
+Then call the method 'fill_forms()' to fill the data in the pdf and get the path for the filled pdf.
 
 **Example:**  
 `fillerObject.fill_forms()`
-
-Finally, in order to get the path for the filled pdf, call the method 'get_output'.
-
-**Example:**  
-`fillerObject.get_output()`
