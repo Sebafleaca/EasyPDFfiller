@@ -28,13 +28,34 @@ class PdfFiller:
     
     # Form-filler procedure.
     def fill_forms(self) -> str:
+        ''' 
+        PDF's form's keys.
+        E.g.    annots[form_type] gives the type of the form
+                annots[text_field] gives the name of the text field
+        '''
+        form_type = '/FT'   # 'Tx' for text field
+        text_field = '/T'   # field's name
+
+        ''' 
+        'Ff' key's flags. Assign their sum to PdfDict(Ff).
+        E.g.    annots.update(PdfDict(Ff=read_only+required))
+        '''
+        read_only = 1       # first bit (low-order) set to ON
+        required = 2        # second bit (low-order) set to ON 
+
         for page in self.pages:
             if page:
                 for annot in page['/Annots']:
-                    if annot['/T']:
-                        data_to_fill = self.data[annot['/T'][1:-1]]
-                        annot.update(PdfDict(V='{}'.format(data_to_fill)))
-                        annot.update(PdfDict(Ff=1))
+                    if annot[text_field]:
+                        # print("Form of type: " + annot['/FT'])
+                        data_to_fill = self.data[annot[text_field][1:-1]]
+                        try:
+                            annot.update(PdfDict(
+                                V='{}'.format(data_to_fill), 
+                                Ff=read_only)
+                            )
+                        except:
+                            raise Exception("Can't instantiate 'PdfDict'.")
                     else:
                         self.errors.insert("Form's name is empty")
             else:
