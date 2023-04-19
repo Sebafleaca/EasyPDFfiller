@@ -5,7 +5,7 @@ import json
 
 class PdfFiller:
 
-    output_pdf = "resources/complex-filled.pdf"
+    output_pdf = "resources/filled-sample.pdf"
     pages = []
     data = {}
     num_errors = 0
@@ -16,7 +16,7 @@ class PdfFiller:
         self.input_pdf = input_pdf
         self.pages = input_pdf.pages
         if len(self.pages) <= 0:
-            self.add_error(self.num_errors, "PDF has no pages")
+            self.add_error("PDF has no pages")
         self.load_data(data_file)
 
     # Load data from json to dict.
@@ -49,14 +49,11 @@ class PdfFiller:
         for page in self.pages:
             if page:
                 for annot in page['/Annots']:
-
                     if annot[form_type] == text_field:
                         flags = read_only+required
                         self.fill_text_fields(annot, field_name, flags=flags)
-
                     elif annot[form_type] == button_field:
                         self.manage_button_fields(annot, field_name)
-
                     else:
                         self.add_error("Unknown field type")
             else:
@@ -79,7 +76,6 @@ class PdfFiller:
         max_length = 255
 
         if annotation[field_name]:
-            # print(annot[field_name], "text")
             data_to_fill = self.data[annotation[field_name][1:-1]]
             if annotation['/MaxLen']:
                 max_length = annotation['/MaxLen']
@@ -90,8 +86,7 @@ class PdfFiller:
                         Ff=flags)
                     )
                 except:
-                    raise Exception(
-                        "Can't instantiate 'PdfDict'.")
+                    raise Exception("Can't instantiate 'PdfDict'.")
             else:
                 self.add_error("Text field's MaxLen exceeded")
         else:

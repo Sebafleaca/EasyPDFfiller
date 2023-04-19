@@ -13,5 +13,8 @@
     "Option1": false,
     "Option2": true,
     "ContractorSignature": "signature1",
-    "CustomerSignature": "signature2"
+    "CustomerSignature": "signature2",
+    "NameKey": "MyName",
+    "SurnameKey": "MySurname",
+    "AgeKey": 27
 }
