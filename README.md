@@ -4,8 +4,10 @@
 ### Script usage:
 run: `$ python src/EasyPDFfiller.py [fillable-pdf-name].pdf [data-file-name].json`
 
-**Example:**  
+**Example1:**  
 run: `$ python src/EasyPDFfiller.py resources/sample-input.pdf resources/sample-data.json`
+**Example2:**  
+run: `$ python src/EasyPDFfiller.py resources/complex-sample.pdf resources/complex-data.json`
 
 
 ### Unit test usage:
