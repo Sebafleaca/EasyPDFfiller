@@ -5,7 +5,7 @@ import json
 
 class PdfFiller:
 
-    output_pdf = "resources/filled-sample.pdf"
+    output_pdf = "resources/complex-filled.pdf"
     pages = []
     data = {}
     num_errors = 0
@@ -21,10 +21,13 @@ class PdfFiller:
 
     # Load data from json to dict.
     def load_data(self, data_in) -> None:
-        with open(data_in, 'r') as json_file:
-            self.data = json.load(json_file)
+        try:
+            with open(data_in, 'r') as json_file:
+                self.data = json.load(json_file)
+        except:
+            self.add_error("Can't read JSON file")
         if not self.data:
-            self.add_error("No data in the JSON")
+            self.add_error("Can't read JSON file")
 
     # Form-filler procedure.
     def fill_forms(self) -> str:
@@ -41,42 +44,53 @@ class PdfFiller:
         '''
         'Ff' key's flags. Assign their sum to PdfDict(Ff).
         E.g.    annots.update(PdfDict(Ff=read_only+required))
+        Or simply modify the 'flags' variable:
+        E.g.    flags=read_only+required
         '''
         read_only = 2**0     # first bit (low-order) set to 1
         required = 2**1      # second bit (low-order) set to 1
         radio = 2**16        # 16th bit set to 1, otherwise is a checkbox
 
         for page in self.pages:
-            if page:
+            if page['/Annots']:
                 for annot in page['/Annots']:
-                    if annot[form_type] == text_field:
-                        flags = read_only+required
-                        self.fill_text_fields(annot, field_name, flags=flags)
-                    elif annot[form_type] == button_field:
-                        self.manage_button_fields(annot, field_name)
-                    else:
-                        self.add_error("Unknown field type")
+                    if not "Can't read JSON file" in self.errors:
+                        if annot[form_type] == text_field:
+                            flags = read_only
+                            self.fill_text_fields(annot, field_name, flags)
+                        elif annot[form_type] == button_field:
+                            self.manage_button_fields(annot, field_name)
+                        else:
+                            self.add_error(str(annot[field_name])
+                                           + " has unknown field type")
             else:
                 self.add_error("PDF's page is empty")
 
         if len(self.errors) == 0:
             PdfWriter().write(self.output_pdf, self.input_pdf)
+            return_string = str(self.output_pdf)
         else:
             print("Errors: ")
             index = 0
             for error in self.errors:
-                print(index, ": " + self.errors[index])
+                print(str(index) + ": " + self.errors[index])
                 index += 1
-            raise Exception("Errors encountered, writing not possible.")
+            return_string = ("Errors encountered, filling not possible.")
 
-        return str(self.output_pdf)
+        return return_string
 
     # Put data in all text-field forms.
     def fill_text_fields(self, annotation, field_name, flags=0) -> None:
         max_length = 255
 
         if annotation[field_name]:
-            data_to_fill = self.data[annotation[field_name][1:-1]]
+            data_to_fill = ""
+            try:
+                data_to_fill = self.data[annotation[field_name][1:-1]]
+            except:
+                self.add_error("Field name "
+                               + str(annotation[field_name])
+                               + " not in JSON data")
             if annotation['/MaxLen']:
                 max_length = annotation['/MaxLen']
             if len(str(data_to_fill)) <= int(max_length):
@@ -86,7 +100,8 @@ class PdfFiller:
                         Ff=flags)
                     )
                 except:
-                    raise Exception("Can't instantiate 'PdfDict'.")
+                    self.add_error("Can't update text form "
+                                   + str(annotation[field_name]))
             else:
                 self.add_error("Text field's MaxLen exceeded")
         else:
@@ -97,12 +112,14 @@ class PdfFiller:
         '''
         if annotation[field_name]:
             # print("Button", annotation[field_name][1:-1])
-            annotation.update(
-                PdfDict(Off=self.data[annotation[field_name][1:-1]]))
+            try:
+                annotation.update(
+                    PdfDict(Off=self.data[annotation[field_name][1:-1]]))
+            except:
+                self.add_error("Can't update button form")
             # print(annotation['/Off'])
         else:
-            # print("Button field has no name")
-            # print(annotation['/Off'])
+            # self.add_error("Button field has no name")
         '''
 
     # Push a new error to the errors array
@@ -112,22 +129,22 @@ class PdfFiller:
 
 
 if len(sys.argv) != 3:
-    raise Exception("Wrong number of arguments.\n"
-                    + "Usage: python EasyPDFfiller.py "
-                    + "pdf-file.pdf data-file.json")
+    raise ImportError("Wrong number of arguments."
+                      + "\nUsage: python EasyPDFfiller.py "
+                      + "pdf-file.pdf data-file.json")
 if not sys.argv[1].endswith(".pdf"):
-    raise Exception("First argument must be a PDF file.")
+    raise ImportError("First argument must be a PDF file.")
 if not sys.argv[2].endswith(".json"):
-    raise Exception("Second argument must be a JSON file.")
+    raise ImportError("Second argument must be a JSON file.")
 
 try:
     pdf_reader = PdfReader(sys.argv[1])
 except:
-    raise Exception("Can't read PDF file.")
+    raise ImportError("Can't read PDF file.")
 try:
     data_file = sys.argv[2]
 except:
-    raise Exception("Can't read JSON file.")
+    raise ImportError("Can't read JSON file.")
 
 fillerObject = PdfFiller(pdf_reader, data_file)
 print(fillerObject.fill_forms())
