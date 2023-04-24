@@ -10,6 +10,8 @@ class PdfFiller:
     data = {}
     num_errors = 0
     errors = []
+    num_warnings = 0
+    warnings = []
 
     # Initialize a PdfFiller object.
     def __init__(self, input_pdf, data_file):
@@ -61,8 +63,8 @@ class PdfFiller:
                         elif annot[form_type] == button_field:
                             self.manage_button_fields(annot, field_name)
                         else:
-                            self.add_error(str(annot[field_name])
-                                           + " has unknown field type")
+                            self.add_warning(str(annot[field_name])
+                                             + " has unknown field type")
             else:
                 self.add_error("PDF's page is empty")
 
@@ -105,7 +107,9 @@ class PdfFiller:
             else:
                 self.add_error("Text field's MaxLen exceeded")
         else:
-            self.add_error("Form's name is empty")
+            self.add_warning("Form '"
+                             + str(annotation[field_name])
+                             + "' not found in JSON")
 
     # Set button-field forms.
     def manage_button_fields(self, annotation, field_name, flags=0) -> None:
@@ -122,10 +126,15 @@ class PdfFiller:
             # self.add_error("Button field has no name")
         '''
 
-    # Push a new error to the errors array
+    # Push a new error to the errors array.
     def add_error(self, new_error):
         self.errors.insert(self.num_errors, new_error)
         self.num_errors += 1
+
+    # Push a new warning to the warnings array.
+    def add_warning(self, new_warning) -> None:
+        self.warnings.insert(self.num_warnings, new_warning)
+        self.num_warnings += 1
 
 
 if len(sys.argv) != 3:
