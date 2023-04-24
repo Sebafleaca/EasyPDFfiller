@@ -69,9 +69,13 @@ class PdfFiller:
                     if not "Can't read JSON file" in self.errors:
                         if annot[form_type] == text_field:
                             flags = read_only
-                            self.fill_text_fields(annot, field_name, flatten, flags)
+                            self.fill_text_field(
+                                annot, field_name, flatten, flags
+                            )
                         elif annot[form_type] == button_field:
-                            self.manage_button_fields(annot, field_name, flatten)
+                            self.manage_button_fields(
+                                annot, field_name, flatten
+                            )
                         else:
                             self.add_warning(str(annot[field_name])
                                              + " has unknown field type")
@@ -91,35 +95,37 @@ class PdfFiller:
 
         return return_string
 
-    # Put data in all text-field forms.
-    def fill_text_fields(self, annotation, field_name, flatten, flags=0) -> None:
+    # Put data in a text-field form.
+    def fill_text_field(self, annotation, field_name, flatten, flags=0) -> None:
         max_length = 255
 
         if annotation[field_name]:
-            data_to_fill = ""
-            try:
-                data_to_fill = self.data[annotation[field_name][1:-1]]
-            except:
-                self.add_error("Field name "
-                               + str(annotation[field_name])
-                               + " not in JSON data")
             if annotation['/MaxLen']:
                 max_length = annotation['/MaxLen']
-            if len(str(data_to_fill)) <= int(max_length):
-                try:
-                    annotation.update(PdfDict(V='{}'.format(data_to_fill)))
-                except:
-                    self.add_error("Can't update text form "
-                                   + str(annotation[field_name]))
-                try:
-                    if flatten:
-                        value = self.flatten_form(annotation['/Ff'])
-                        annotation.update(PdfDict(Ff=value))
-                except:
-                    self.add_error("Can't flatten text form "
-                                    + str(annotation[field_name]))
+            key = annotation[field_name][1:-1]
+            if key in self.data.keys():
+                data_to_fill = self.data[key]
+                if len(str(data_to_fill)) <= int(max_length):
+                    try:
+                        annotation.update(
+                            PdfDict(V='{}'.format(data_to_fill))
+                        )
+                    except:
+                        self.add_error("Can't update text form "
+                                       + str(annotation[field_name]))
+                    try:
+                        if flatten:
+                            value = self.flatten_form(annotation['/Ff'])
+                            annotation.update(PdfDict(Ff=value))
+                    except:
+                        self.add_error("Can't flatten text form "
+                                       + str(annotation[field_name]))
+                else:
+                    self.add_error("Text field's MaxLen exceeded")
             else:
-                self.add_error("Text field's MaxLen exceeded")
+                self.add_warning("Form '"
+                                 + str(annotation[field_name])
+                                 + "' not found in JSON")
         else:
             self.add_warning("Form '"
                              + str(annotation[field_name])
