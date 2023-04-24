@@ -1,0 +1,13 @@
+{
+    "TextField": "new text",
+    "CheckBox1": false,
+    "CheckBox2": "Yes",
+    "FormattedField": 123,
+    "ListBox": "Spain",
+    "C1R1": "a",
+    "C2R1": "b",
+    "C1R2": 1,
+    "C2R2": 2,
+    "C1R3": true,
+    "C2R3": false
+}

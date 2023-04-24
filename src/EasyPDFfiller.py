@@ -5,7 +5,9 @@ import json
 
 class PdfFiller:
 
-    output_pdf = "resources/complex-filled.pdf"
+    input_path = ""
+    output_path = ""
+    pdf_reader = PdfReader
     pages = []
     data = {}
     num_errors = 0
@@ -14,9 +16,17 @@ class PdfFiller:
     warnings = []
 
     # Initialize a PdfFiller object.
-    def __init__(self, input_pdf, data_file):
-        self.input_pdf = input_pdf
-        self.pages = input_pdf.pages
+    def __init__(self, input_pdf, data_file, output_pdf="") -> None:
+        self.input_path = input_pdf
+        if output_pdf != "":
+            self.output_path = output_pdf
+        else:
+            self.output_path = self.input_path.replace(".pdf", "-filled.pdf")
+        try:
+            self.pdf_reader = PdfReader(input_pdf)
+        except:
+            raise AttributeError("Can't read PDF file")
+        self.pages = self.pdf_reader.pages
         if len(self.pages) <= 0:
             self.add_error("PDF has no pages")
         self.load_data(data_file)
@@ -29,7 +39,7 @@ class PdfFiller:
         except:
             self.add_error("Can't read JSON file")
         if not self.data:
-            self.add_error("Can't read JSON file")
+            self.add_error("No data in the JSON")
 
     # Form-filler procedure.
     def fill_forms(self) -> str:
@@ -69,8 +79,8 @@ class PdfFiller:
                 self.add_error("PDF's page is empty")
 
         if len(self.errors) == 0:
-            PdfWriter().write(self.output_pdf, self.input_pdf)
-            return_string = str(self.output_pdf)
+            PdfWriter().write(self.output_path, self.pdf_reader)
+            return_string = str(self.output_path)
         else:
             print("Errors: ")
             index = 0
@@ -137,23 +147,18 @@ class PdfFiller:
         self.num_warnings += 1
 
 
-if len(sys.argv) != 3:
+if len(sys.argv) < 3:
     raise ImportError("Wrong number of arguments."
                       + "\nUsage: python EasyPDFfiller.py "
-                      + "pdf-file.pdf data-file.json")
+                      + "[input-pdf].pdf [data-file].json"
+                      + "(optional: [output-pdf].pdf)")
 if not sys.argv[1].endswith(".pdf"):
     raise ImportError("First argument must be a PDF file.")
 if not sys.argv[2].endswith(".json"):
     raise ImportError("Second argument must be a JSON file.")
 
-try:
-    pdf_reader = PdfReader(sys.argv[1])
-except:
-    raise ImportError("Can't read PDF file.")
-try:
-    data_file = sys.argv[2]
-except:
-    raise ImportError("Can't read JSON file.")
-
-fillerObject = PdfFiller(pdf_reader, data_file)
-print(fillerObject.fill_forms())
+if len(sys.argv) == 4:
+    filler = PdfFiller(sys.argv[1], sys.argv[2], sys.argv[3])
+elif len(sys.argv) == 3:
+    filler = PdfFiller(sys.argv[1], sys.argv[2])
+print(filler.fill_forms())
