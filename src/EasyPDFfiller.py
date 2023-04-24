@@ -1,5 +1,5 @@
 import sys
-from pdfrw import PdfReader, PdfWriter, PdfDict
+from pdfrw import PdfReader, PdfWriter, PdfDict, PdfName
 import json
 
 
@@ -61,7 +61,7 @@ class PdfFiller:
         '''
         read_only = 2**0     # first bit (low-order) set to 1
         required = 2**1      # second bit (low-order) set to 1
-        radio = 2**16        # 16th bit set to 1, otherwise is a checkbox
+        radio = 2**16        # 16th bit set to 1, if not it's a checkbox
 
         for page in self.pages:
             if page['/Annots']:
@@ -73,7 +73,7 @@ class PdfFiller:
                                 annot, field_name, flatten, flags
                             )
                         elif annot[form_type] == button_field:
-                            self.manage_button_fields(
+                            self.manage_button_field(
                                 annot, field_name, flatten
                             )
                         else:
@@ -131,20 +131,51 @@ class PdfFiller:
                              + str(annotation[field_name])
                              + "' not found in JSON")
 
-    # Set button-field forms.
-    def manage_button_fields(self, annotation, field_name, flatten, flags=0) -> None:
-        '''
+    # Set button-field form.
+    def manage_button_field(self, annotation, field_name, flatten, flags=0) -> None:
+
         if annotation[field_name]:
-            # print("Button", annotation[field_name][1:-1])
-            try:
-                annotation.update(
-                    PdfDict(Off=self.data[annotation[field_name][1:-1]]))
-            except:
-                self.add_error("Can't update button form")
-            # print(annotation['/Off'])
+            key = annotation[field_name][1:-1]
+            if key in self.data.keys():
+                try:
+                    if type(self.data[key]) == bool:
+                        if self.data[key] == True:
+                            annotation.update(PdfDict(AS=PdfName('Yes')))
+                        elif self.data[key] == False:
+                            annotation.update(PdfDict(AS=PdfName('Off')))
+                        else:
+                            self.add_warning("Unknown value for form '"
+                                             + annotation[field_name]
+                                             + "'")
+                    else:
+                        if self.data[key] == "Yes":
+                            annotation.update(
+                                PdfDict(V='Yes', AS=PdfName('Yes'))
+                            )
+                        elif self.data[key] == "No":
+                            annotation.update(
+                                PdfDict(V='{}'.format(self.data[key]),
+                                        AS=PdfName('Off'))
+                            )
+                        else:
+                            self.add_warning("Unknown value for form '"
+                                             + annotation[field_name]
+                                             + "'")
+                except:
+                    self.add_error("Can't update form '"
+                                   + annotation[field_name]
+                                   + "'")
+                try:
+                    if flatten:
+                        value = self.flatten_form(annotation['/Ff'])
+                        annotation.update(PdfDict(Ff=value))
+                except:
+                    self.add_error("Can't flatten button form "
+                                   + str(annotation[field_name]))
         else:
-            # self.add_error("Button field has no name")
-        '''
+            self.add_warning("Form '"
+                             + str(annotation[field_name])
+                             + "' not found in JSON")
 
     # Flatten (i.e. make read-only) a form.
     def flatten_form(self, flag_value) -> int:
@@ -159,7 +190,7 @@ class PdfFiller:
         return ff
 
     # Push a new error to the errors array.
-    def add_error(self, new_error):
+    def add_error(self, new_error) -> None:
         self.errors.insert(self.num_errors, new_error)
         self.num_errors += 1
 
